@@ -179,6 +179,15 @@
 .tpl-banking { --cv-accent: #E66239; }
 .tpl-graduate .cv-name { color: var(--cv-accent); }
 .tpl-general .cv-sec { border-bottom: none; border-left: 4px solid var(--cv-accent); padding-left: 8px; }
+// Professional Two-Column (converted from ODT pro layout): teal accent,
+// header spans both columns, sections flow newspaper-style. Best printed
+// or emailed as PDF — use an ATS-clean template for job portals.
+.tpl-clinical { --cv-accent: #244655; }
+.tpl-clinical.cv-sheet { columns: 2; column-gap: 28px; }
+.tpl-clinical .cv-head { column-span: all; border-bottom: 3px solid var(--cv-accent); padding-bottom: 8px; margin-bottom: 4px; }
+.tpl-clinical .cv-name { color: var(--cv-accent); }
+.tpl-clinical .cv-sec { break-inside: avoid; }
+.tpl-clinical .cv-item { break-inside: avoid; }
 // Application letter layout
 .tpl-letter .lt-date { text-align: right; color: $gray-500; }
 .tpl-letter p { margin-bottom: 8px; }
@@ -254,10 +263,17 @@
 .tpl-graduate .cv-name { color: $primary; }
 
 @media print {
+  @page { size: A4; margin: 10mm; }
   #sidebar, #topbar, #aiCol, #builderCol, footer, .no-print { display: none !important; }
   .content { margin-left: 0 !important; padding: 0 !important; }
   #cvCol { display: block !important; flex: 0 0 100% !important; max-width: 100% !important; width: 100% !important; }
-  .cv-sheet { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+  .cv-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
   // Paper always prints light, even in dark mode
   .cv-sheet, [data-bs-theme="dark"] .cv-sheet {
     background: #fff !important;

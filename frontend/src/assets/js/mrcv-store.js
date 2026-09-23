@@ -15,6 +15,9 @@ export const TEMPLATES = [
   { slug: 'general', name: 'General Professional', cat: 'general', mock: 'clean',
     desc: 'Balanced 2-page CV for any role. Work history first, clean headings parsers love.',
     best: 'Any role, experienced hires', badges: ['ATS-safe', 'EN/SW', 'Free'] },
+  { slug: 'clinical', name: 'Professional Two-Column', cat: 'general', mock: 'formal',
+    desc: 'Teal two-column design converted from a pro layout. Best for email and hand-in; use an ATS-clean template for portals.',
+    best: 'Doctors, nurses, consultants, hand-in CVs', badges: ['2-column', 'Print-ready', 'Free'] },
   { slug: 'barua', name: 'Application Letter (Barua ya Maombi)', cat: 'barua', kind: 'letter', mock: 'letter',
     desc: 'Swahili or English application-letter layout. Pairs with any CV for a complete application pack.',
     best: 'Barua za maombi kwa Kiswahili au Kiingereza', badges: ['Kiswahili', 'Letter', 'Free'], useLink: 'cover-letters.html#generator' },
@@ -157,7 +160,96 @@ export function downloadDoc(filename, text, opts = {}) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
-export const TEMPLATE_LABELS = { graduate: 'Graduate', government: 'Govt/NGO', banking: 'Banking', general: 'General', barua: 'Barua' };
+// Single source of truth for exports: scrape the live compiled stylesheet for
+// CV rules at download time, so exports can never drift from the website.
+// Skips print rules, dark-theme rules (documents stay light paper) and
+// gallery-only helpers. Resolves CSS vars from the live theme; maps the web
+// font to an office-safe stack.
+export function collectSheetCSS(theme) {
+  const keep = (sel) => /(\.cv-sheet|\.tpl-|\.cv-(sec|head|name|title|contact|item|dates|bullets)|skill-chip)/.test(sel)
+    && !/data-bs-theme/.test(sel);
+  const out = [];
+  let sheets = [];
+  try { sheets = [...document.styleSheets]; } catch (e) { return ''; }
+  for (const sh of sheets) {
+    let rules = [];
+    try { rules = [...(sh.cssRules || [])]; } catch (e) { continue; }
+    for (const r of rules) {
+      if (r.type === 4 && r.conditionText && !/print/.test(r.conditionText)) {
+        for (const inner of r.cssRules || []) {
+          if (inner.type === 1 && inner.selectorText && keep(inner.selectorText)) out.push(`${inner.selectorText}{${inner.style.cssText}}`);
+        }
+      } else if (r.type === 1 && r.selectorText && keep(r.selectorText)) {
+        out.push(`${r.selectorText}{${r.style.cssText}}`);
+      }
+    }
+  }
+  if (!out.length) return '';
+  const font = String((theme && theme.fontStack) || "'Poppins',sans-serif")
+    .replace(/'Poppins',sans-serif/, 'Calibri,Arial,sans-serif');
+  return out.join('\n')
+    .replace(/var\(--cv-accent\)/g, (theme && theme.color) || '#E66239')
+    .replace(/var\(--cv-font\)/g, font)
+    .replace(/var\(--cv-size\)/g, (theme && theme.size) || '13px');
+}
+
+// Backend file export: tries the FastAPI service first, returns false when
+// unreachable so callers fall back to local export (offline-first).
+export function backendBase() {
+  try {
+    if (window.MRCV_BACKEND_URL) return String(window.MRCV_BACKEND_URL).replace(/\/$/, '');
+    const h = location.hostname || '';
+    if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000/api';
+    return '/api';
+  } catch (e) {
+    return '';
+  }
+}
+
+export async function downloadFromBackend(kind, payload) {
+  const base = backendBase();
+  if (!base) return false;
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), 25000);
+  try {
+    const r = await fetch(`${base}/export/${kind}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctl.signal,
+    });
+    if (!r.ok) return false;
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const m = (r.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/);
+    a.download = m ? m[1] : payload.filename || (kind === 'pdf' ? 'cv.pdf' : 'cv.docx');
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    return true;
+  } catch (e) {
+    return false;
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+// Styled .doc export: full Word package carrying the live web design
+// (accent color, font, size, template rules) — true WYSIWYG.
+export function downloadStyledDoc(filename, sheetHTML, cssText) {
+  const name = String(filename || 'document').replace(/[\\/:*?"<>|]/g, '-').replace(/(\.doc)?$/i, '.doc');
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>CV</title><style>${cssText}</style></head><body>${sheetHTML}</body></html>`;
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+export const TEMPLATE_LABELS = { graduate: 'Graduate', government: 'Govt/NGO', banking: 'Banking', general: 'General', clinical: 'Clinical', barua: 'Barua' };
 
 export function blankData() {
   return {
@@ -263,6 +355,36 @@ export function cvToHTML(data, only = null) {
       <div class="cv-item"><div class="cv-item-head"><span>${esc(x.name)}</span></div><div>${esc(x.desc)}</div></div>`).join('')}` : ''}
     ${show('referees') && data.referees.some((r) => r.name) ? `<div class="cv-sec">Referees</div>${data.referees.filter((r) => r.name).map((r) => `
       <div class="cv-item"><strong>${esc(r.name)}</strong>${r.title ? ` — ${esc(r.title)}` : ''}${r.phone ? `<br><span class="cv-dates">${esc(r.phone)}</span>` : ''}</div>`).join('')}` : ''}`;
+}
+
+// Export-ready HTML with the design inlined (accent, font, size, template
+// rules as style="" attributes). LibreOffice ignores class CSS, so files
+// must carry their looks inline; Chrome uses these + the scraped stylesheet.
+// opts.singleFont: request only the first family (Word/LibreOffice take the
+// whole stack as one broken name otherwise); browsers keep the full stack.
+export function cvThemedHTML(data, theme, template, opts = {}) {
+  const accent = (theme && theme.color) || '#E66239';
+  const fullStack = (theme && theme.fontStack) || "'Poppins',sans-serif";
+  const font = opts.singleFont ? fullStack.split(',')[0].replace(/['"]/g, '') : fullStack;
+  const size = (theme && theme.size) || '13px';
+  const st = (s) => ` style="${s}"`;
+  let h = cvToHTML(data);
+  const headExtra = template === 'banking'
+    ? 'background:#262626;color:#ffffff;padding:12px 14px;margin-bottom:12px;'
+    : (template === 'government' ? 'text-align:center;margin-bottom:12px;' : 'margin-bottom:12px;');
+  h = h.replace('<div class="cv-head">', `<div${st(headExtra)}>`);
+  const nameColor = template === 'banking' ? '#ffffff' : ((template === 'graduate' || template === 'clinical') ? accent : '#171717');
+  h = h.split('<div class="cv-name">').join(`<div${st(`font-size:22px;font-weight:700;color:${nameColor};margin:0;`)}>`);
+  const titleColor = template === 'banking' ? '#F0B100' : accent;
+  h = h.split('<div class="cv-title">').join(`<div${st(`font-size:13px;font-weight:700;color:${titleColor};margin-bottom:4px;`)}>`);
+  h = h.split('<div class="cv-contact">').join(`<div${st('font-size:12px;color:#737373;margin-bottom:12px;')}>`);
+  let sec = `font-size:12px;font-weight:700;color:#171717;border-bottom:2px solid ${accent};padding-bottom:2px;margin:14px 0 6px;`;
+  if (template === 'government') sec = `font-size:12px;font-weight:700;color:#171717;border-bottom:3px double ${accent};padding-bottom:2px;margin:14px 0 6px;`;
+  if (template === 'general') sec = `font-size:12px;font-weight:700;color:#171717;border:none;border-left:4px solid ${accent};padding-left:8px;margin:14px 0 6px;`;
+  h = h.split('<div class="cv-sec">').join(`<div${st(sec)}>`);
+  h = h.split('<span class="cv-dates">').join(`<span${st('color:#737373;font-size:12px;')}>`);
+  h = h.split('<div class="cv-item-head">').join(`<div${st('font-weight:700;')}>`);
+  return `<div${st(`font-family:${font};font-size:${size};color:#262626;line-height:1.55;`)}>${h}</div>`;
 }
 
 export const SAMPLE_CV = {

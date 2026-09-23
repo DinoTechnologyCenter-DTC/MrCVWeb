@@ -3,7 +3,7 @@ import { getCVs, getLetters, duplicateCV, deleteCV, bumpDownloads, esc, fmtDate,
 import { t } from './mrcv-i18n.js';
 
 function templateName(slug) {
-  return { graduate: 'Graduate', government: 'Govt/NGO', banking: 'Banking', general: 'General', barua: 'Barua' }[slug] || slug;
+  return { graduate: 'Graduate', government: 'Govt/NGO', banking: 'Banking', general: 'General', clinical: 'Clinical', barua: 'Barua' }[slug] || slug;
 }
 
 function renderStats() {

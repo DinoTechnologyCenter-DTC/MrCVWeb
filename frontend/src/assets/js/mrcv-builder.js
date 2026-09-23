@@ -1,5 +1,5 @@
 // MrCV guided builder — form <-> data <-> live preview, autosaved locally.
-import { getCV, createCV, updateCV, blankData, TEMPLATE_LABELS, esc, waLink, downloadDoc, normalizeTZPhone, cvToHTML, getUser, COUNTRIES } from './mrcv-store.js';
+import { getCV, createCV, updateCV, blankData, TEMPLATE_LABELS, esc, waLink, downloadDoc, downloadStyledDoc, downloadFromBackend, collectSheetCSS, cvThemedHTML, normalizeTZPhone, cvToHTML, getUser, COUNTRIES } from './mrcv-store.js';
 import { t, lang } from './mrcv-i18n.js';
 
 const params = new URLSearchParams(location.search);
@@ -85,8 +85,8 @@ function startChat() {
   setTimeout(() => chatAsk(t('chat.qName')), 800);
 }
 let data = blankData();
-const TPL_DEFAULTS = { graduate: '#E66239', government: '#00C951', banking: '#E66239', general: '#E66239' };
-const FONTS = { poppins: "'Poppins',sans-serif", georgia: "Georgia,'Times New Roman',serif", arial: "Arial,Helvetica,sans-serif" };
+const TPL_DEFAULTS = { graduate: '#E66239', government: '#00C951', banking: '#E66239', general: '#E66239', clinical: '#244655' };
+const FONTS = { poppins: "'Poppins',sans-serif", georgia: "Georgia,Gelasio,'Times New Roman',serif", arial: "Arial,'Liberation Sans',Helvetica,sans-serif" };
 const SIZES = { s: '12px', m: '13px', l: '14.5px' };
 let theme = { color: TPL_DEFAULTS[template] || '#E66239', font: 'poppins', size: 'm' };
 // sections revealed during AI streaming (null = show all)
@@ -239,6 +239,25 @@ function renderScore() {
   const s = completeness();
   document.getElementById('completeBar').style.width = `${s}%`;
   document.getElementById('completeTxt').textContent = `${s}%`;
+}
+
+// CSS mirroring the live web preview (accent, font, size, template design)
+export function exportCSS() {
+  const accent = theme.color || '#E66239';
+  const font = FONTS[theme.font] || FONTS.poppins;
+  const size = SIZES[theme.size] || SIZES.m;
+  let extra = '';
+  if (template === 'graduate') extra += '.cv-name{color:' + accent + ';}';
+  if (template === 'banking') extra += '.cv-head{background:#262626;color:#fff;padding:12px 14px;}.cv-head .cv-name{color:#fff;}.cv-head .cv-contact{color:#d4d4d4;}.cv-title{color:#F0B100;}';
+  if (template === 'government') extra += '.cv-head{text-align:center;}.cv-sec{border-bottom:3px double ' + accent + ';}';
+  if (template === 'general') extra += '.cv-sec{border:none;border-left:4px solid ' + accent + ';padding-left:8px;}';
+  return 'body{font-family:' + font + ';font-size:' + size + ';color:#262626;line-height:1.55;}'
+    + '.cv-name{font-size:22px;font-weight:700;color:#171717;margin:0;}'
+    + '.cv-title{font-size:13px;font-weight:700;color:' + accent + ';margin-bottom:4px;}'
+    + '.cv-contact{font-size:12px;color:#737373;margin-bottom:12px;}'
+    + '.cv-sec{font-size:12px;font-weight:700;text-transform:uppercase;color:#171717;border-bottom:2px solid ' + accent + ';padding-bottom:2px;margin:14px 0 6px;}'
+    + '.cv-item{margin-bottom:8px;}.cv-dates{color:#737373;font-size:12px;}ul{margin:2px 0 0 18px;padding:0;}'
+    + '.skill-chip{display:inline-block;border:1px solid #e5e5e5;border-radius:20px;padding:1px 10px;margin:0 4px 4px 0;font-size:12px;}' + extra;
 }
 
 function plainText() {
@@ -474,16 +493,71 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRepeaters(); renderPreview(); renderScore(); scheduleSave();
   });
 
-  document.getElementById('btnPrint').addEventListener('click', () => {
+  // Export CSS comes from the live stylesheet (single source of truth);
+  // the hand-written exportCSS() is only a fallback.
+  function currentExportCSS() {
+    return collectSheetCSS({
+      color: theme.color,
+      fontStack: FONTS[theme.font] || FONTS.poppins,
+      size: SIZES[theme.size] || SIZES.m,
+    }) || exportCSS();
+  }
+  // Export HTML carries the design inline (LibreOffice-proof) + classes
+  // for Chrome layout fidelity.
+  function currentExportHTML(singleFont) {
+    return cvThemedHTML(data, {
+      color: theme.color,
+      fontStack: FONTS[theme.font] || FONTS.poppins,
+      size: SIZES[theme.size] || SIZES.m,
+    }, template, { singleFont: !!singleFont });
+  }
+  document.getElementById('btnPrint').addEventListener('click', async () => {
     persist();
+    const name = `${data.personal.fullName || 'My'}-CV`;
+    // Backend first: real PDF file. Offline fallback: print dialog.
+    const ok = await downloadFromBackend('pdf', { html: currentExportHTML(false), css: currentExportCSS(), filename: name });
     const cv = cvId ? getCV(cvId) : null;
     if (cv) updateCV(cvId, { downloads: (cv.downloads || 0) + 1 });
-    window.print();
+    if (!ok) window.print();
+    thankOnce();
   });
-  document.getElementById('btnDoc').addEventListener('click', () => {
+  document.getElementById('btnDoc').addEventListener('click', async () => {
     persist();
-    downloadDoc(`${data.personal.fullName || 'My'}-CV.doc`, plainText());
+    const name = `${data.personal.fullName || 'My'}-CV.doc`;
+    // Backend first: real .docx file. Offline fallback: styled .doc.
+    const ok = await downloadFromBackend('docx', { html: currentExportHTML(true), css: currentExportCSS(), filename: name });
+    if (!ok) downloadStyledDoc(name, currentExportHTML(true), currentExportCSS());
+    thankOnce();
   });
+  // Thank-you popup, once per session after a successful download.
+  // Success animation (Lottie) lazy-loads so the main bundle stays lean.
+  let thanksAnim = null;
+  async function playThanks() {
+    try {
+      const box = document.getElementById('thanksAnim');
+      if (!box) return;
+      if (!thanksAnim) {
+        const [{ default: lottie }, anim] = await Promise.all([
+          import('lottie-web'),
+          import('../animations/success-check.json'),
+        ]);
+        thanksAnim = lottie.loadAnimation({
+          container: box, renderer: 'svg', loop: false, autoplay: false, animationData: anim.default || anim,
+        });
+      }
+      thanksAnim.goToAndPlay(0);
+    } catch (e) { /* animation optional — text still shows */ }
+  }
+  const thanksModal = document.getElementById('thanksModal');
+  if (thanksModal) thanksModal.addEventListener('shown.bs.modal', () => playThanks());
+  function thankOnce() {
+    try {
+      if (sessionStorage.getItem('mrcv.thanked')) return;
+      sessionStorage.setItem('mrcv.thanked', '1');
+    } catch (e) { /* ignore */ }
+    const btn = document.getElementById('thanksTrigger');
+    if (btn) btn.click();
+  }
   document.getElementById('btnWa').addEventListener('click', (e) => {
     e.preventDefault();
     persist();

@@ -1,5 +1,5 @@
 // Cover letters — list, generator (EN/SW), download, WhatsApp share.
-import { getCVs, getLetters, upsertLetter, deleteLetter, buildLetter, esc, fmtDate, waLink, downloadDoc } from './mrcv-store.js';
+import { getCVs, getLetters, upsertLetter, deleteLetter, buildLetter, esc, fmtDate, waLink, downloadDoc, downloadFromBackend } from './mrcv-store.js';
 import { t } from './mrcv-i18n.js';
 
 let editingId = null;
@@ -133,9 +133,14 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLetters();
   });
 
-  document.getElementById('letterDl').addEventListener('click', () => {
+  document.getElementById('letterDl').addEventListener('click', async () => {
     const f = currentForm();
-    downloadDoc(`Cover-Letter-${f.jobTitle || 'draft'}.doc`, document.getElementById('letterBody').value, { headline: false });
+    const text = document.getElementById('letterBody').value;
+    const name = `Cover-Letter-${f.jobTitle || 'draft'}`;
+    const html = text.split('\n').map((p) => (p.trim() ? `<p>${esc(p.trim())}</p>` : '')).join('');
+    const css = 'body{font-family:Georgia,serif;font-size:12pt;color:#111;}p{margin:0 0 8pt;}';
+    const ok = await downloadFromBackend('docx', { html, css, filename: name });
+    if (!ok) downloadDoc(`${name}.doc`, text, { headline: false });
   });
 
   document.getElementById('letterWa').addEventListener('click', (e) => {
@@ -143,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.open(waLink(document.getElementById('letterBody').value), '_blank', 'noopener');
   });
 
-  document.getElementById('letterList').addEventListener('click', (e) => {
+  document.getElementById('letterList').addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
     const letters = getLetters();
@@ -154,7 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteLetter(l.id);
       renderLetters();
     }
-    if (btn.dataset.act === 'dl') downloadDoc(`Cover-Letter-${l.jobTitle}.doc`, l.body, { headline: false });
+    if (btn.dataset.act === 'dl') {
+      const html = l.body.split('\n').map((p) => (p.trim() ? `<p>${esc(p.trim())}</p>` : '')).join('');
+      const ok = await downloadFromBackend('docx', { html, css: 'body{font-family:Georgia,serif;font-size:12pt;}p{margin:0 0 8pt;}', filename: `Cover-Letter-${l.jobTitle}` });
+      if (!ok) downloadDoc(`Cover-Letter-${l.jobTitle}.doc`, l.body, { headline: false });
+    }
     if (btn.dataset.act === 'edit') {
       editingId = l.id;
       fillCvSelect();

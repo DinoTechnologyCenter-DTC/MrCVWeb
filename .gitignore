@@ -8,3 +8,8 @@ Thumbs.db
 # Logs / temp servers
 *.log
 /tmp/
+
+# Backend (FastAPI)
+backend/.venv/
+backend/__pycache__/
+backend/*.pyc
