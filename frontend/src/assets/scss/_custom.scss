@@ -1,0 +1,185 @@
+
+.overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,.45);
+	backdrop-filter: blur(1px);
+	display: none;
+	z-index: 1030;
+}
+.overlay.show {
+	display: block;
+}
+.sidebar {
+	width: 240px;
+	background: $white;
+	transition: width .3s, left .3s;
+  border-right: 1px solid $gray-200;
+	height: 100vh;
+	position: fixed;
+	top: 0;
+	left: 0;
+	padding-top: 60px;
+	z-index: 1030;
+	.nav-link {
+		color: $gray-800;
+		padding: 8px 10px;
+		display: flex;
+		align-items: center;
+    font-size: 14px;
+    font-weight: 400;
+		gap: 12px;
+		white-space: nowrap;
+    margin: 1px 12px;
+    border-radius: 8px;
+
+		&:hover {
+			color: $primary;
+      background-color: rgba($primary, 0.095);
+		}
+			&.active {
+			color: $primary;
+      background-color: rgba($primary, 0.095);
+		}
+    .ti {
+      font-size: 18px;
+    }
+	}
+	.nav-text {
+		transition: opacity .2s;
+	}
+	.logo-area {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 60px;
+		width: 100%;
+		background: $white;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding-left: 17px;
+		color: $gray-800;
+    border-bottom: 1px solid $gray-200;
+	}
+}
+.sidebar.collapsed {
+	width: 60px;
+	.nav-link{
+		margin: 0 0px;
+		background-color: transparent;
+		padding: 8px 18px;
+	}
+	.nav-text {
+		display: none;
+	}
+	.logo-text {
+		display: none;
+	}
+}
+.topbar {
+	height: 60px;
+	margin-left: 240px;
+	// transition: margin-left .3s;
+}
+.topbar.full {
+	margin-left: 60px;
+}
+.content {
+	margin-left: 240px;
+	// transition: margin-left .3s;
+	// padding: 20px;
+}
+.content.full {
+	margin-left: 60px;
+}
+@media (max-width: 992px) {
+	.sidebar {
+		left: -240px;
+	}
+	.sidebar.mobile-show {
+		left: 0;
+	}
+	.topbar {
+		margin-left: 0 !important;
+		width: 100% !important;
+	}
+	.content {
+		margin-left: 0 !important;
+	}
+}
+
+
+@import "./avatar";
+@import "./button";
+@import "./icon-shape";
+@import "./utilities";
+
+// MrCV template previews
+.cv-mock {
+  background: $gray-100;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+  min-height: 150px;
+}
+.cv-mock-lg { min-height: 220px; }
+.mock-head {
+  height: 14px;
+  border-radius: 4px;
+  background: $primary;
+  opacity: .75;
+  margin-bottom: 8px;
+}
+.mock-line {
+  height: 7px;
+  border-radius: 4px;
+  background: $gray-300;
+  margin-bottom: 6px;
+}
+.mock-side {
+  width: 34px;
+  border-radius: 4px;
+  background: rgba($primary, .25);
+}
+.mock-photo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba($primary, .35);
+  flex-shrink: 0;
+}
+
+// MrCV live CV preview sheet (ATS-clean, single column)
+.cv-sheet {
+  background: #fff;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  padding: 32px 30px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: $gray-800;
+  .cv-name { font-size: 22px; font-weight: 700; margin-bottom: 0; color: $gray-900; }
+  .cv-title { font-size: 13px; font-weight: 600; color: $primary; margin-bottom: 4px; }
+  .cv-contact { font-size: 11.5px; color: $gray-500; margin-bottom: 12px; }
+  .cv-sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: $gray-900; border-bottom: 2px solid $primary; padding-bottom: 2px; margin: 14px 0 6px; }
+  .cv-item { margin-bottom: 8px; }
+  .cv-item-head { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
+  .cv-dates { font-weight: 400; color: $gray-500; font-size: 11.5px; white-space: nowrap; }
+  ul.cv-bullets { margin: 2px 0 0; padding-left: 18px; }
+  .skill-chip { display: inline-block; background: $gray-100; border: 1px solid $gray-200; border-radius: 20px; padding: 1px 10px; margin: 0 4px 4px 0; font-size: 11.5px; }
+}
+.tpl-government .cv-sec { border-color: $green; }
+.tpl-government .cv-title { color: $green; }
+.tpl-banking .cv-head { background: $gray-900; color: #fff; border-radius: 6px; padding: 12px 14px; margin: -8px -6px 10px; }
+.tpl-banking .cv-head .cv-name { color: #fff; }
+.tpl-banking .cv-head .cv-contact { color: $gray-300; }
+.tpl-banking .cv-title { color: $yellow; }
+.tpl-graduate .cv-name { color: $primary; }
+
+@media print {
+  #sidebar, #topbar, #builderCol, footer, .no-print { display: none !important; }
+  .content { margin-left: 0 !important; padding: 0 !important; }
+  #cvCol { flex: 0 0 100% !important; max-width: 100% !important; width: 100% !important; }
+  .cv-sheet { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+}

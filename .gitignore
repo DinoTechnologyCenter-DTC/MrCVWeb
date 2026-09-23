@@ -1,0 +1,10 @@
+# Local test downloads / scratch
+eventsHappened/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs / temp servers
+*.log
+/tmp/
