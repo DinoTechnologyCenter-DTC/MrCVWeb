@@ -151,26 +151,33 @@
 
 // MrCV live CV preview sheet (ATS-clean, single column)
 .cv-sheet {
+  --cv-accent: #E66239;
+  --cv-font: 'Poppins', sans-serif;
+  --cv-size: 13px;
   background: #fff;
   border: 1px solid $gray-200;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
   padding: 32px 30px;
-  font-size: 13px;
+  font-family: var(--cv-font);
+  font-size: var(--cv-size);
   line-height: 1.55;
   color: $gray-800;
-  .cv-name { font-size: 22px; font-weight: 700; margin-bottom: 0; color: $gray-900; }
-  .cv-title { font-size: 13px; font-weight: 600; color: $primary; margin-bottom: 4px; }
-  .cv-contact { font-size: 11.5px; color: $gray-500; margin-bottom: 12px; }
-  .cv-sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: $gray-900; border-bottom: 2px solid $primary; padding-bottom: 2px; margin: 14px 0 6px; }
+  .cv-name { font-size: 1.7em; font-weight: 700; margin-bottom: 0; color: $gray-900; }
+  .cv-title { font-size: 1em; font-weight: 600; color: var(--cv-accent); margin-bottom: 4px; }
+  .cv-contact { font-size: .9em; color: $gray-500; margin-bottom: 12px; }
+  .cv-sec { font-size: .95em; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: $gray-900; border-bottom: 2px solid var(--cv-accent); padding-bottom: 2px; margin: 14px 0 6px; }
   .cv-item { margin-bottom: 8px; }
   .cv-item-head { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
-  .cv-dates { font-weight: 400; color: $gray-500; font-size: 11.5px; white-space: nowrap; }
+  .cv-dates { font-weight: 400; color: $gray-500; font-size: .9em; white-space: nowrap; }
   ul.cv-bullets { margin: 2px 0 0; padding-left: 18px; }
-  .skill-chip { display: inline-block; background: $gray-100; border: 1px solid $gray-200; border-radius: 20px; padding: 1px 10px; margin: 0 4px 4px 0; font-size: 11.5px; }
+  .skill-chip { display: inline-block; background: $gray-100; border: 1px solid $gray-200; border-radius: 20px; padding: 1px 10px; margin: 0 4px 4px 0; font-size: .9em; }
 }
-.tpl-government .cv-sec { border-color: $green; }
-.tpl-government .cv-title { color: $green; }
+.tpl-government { --cv-accent: #00C951; }
+.tpl-banking { --cv-accent: #E66239; }
+.tpl-graduate .cv-name { color: var(--cv-accent); }
+.theme-swatch { border: 2px solid transparent; }
+.theme-swatch.active { outline: 2px solid $primary; outline-offset: 2px; }
 .tpl-banking .cv-head { background: $gray-900; color: #fff; border-radius: 6px; padding: 12px 14px; margin: -8px -6px 10px; }
 .tpl-banking .cv-head .cv-name { color: #fff; }
 .tpl-banking .cv-head .cv-contact { color: $gray-300; }

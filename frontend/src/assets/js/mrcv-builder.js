@@ -6,10 +6,29 @@ let cvId = params.get('id') || null;
 let template = params.get('template') || 'general';
 if (!TEMPLATE_LABELS[template] || template === 'barua') template = 'general';
 let data = blankData();
+const TPL_DEFAULTS = { graduate: '#E66239', government: '#00C951', banking: '#E66239', general: '#E66239' };
+const FONTS = { poppins: "'Poppins',sans-serif", georgia: "Georgia,'Times New Roman',serif", arial: "Arial,Helvetica,sans-serif" };
+const SIZES = { s: '12px', m: '13px', l: '14.5px' };
+let theme = { color: TPL_DEFAULTS[template] || '#E66239', font: 'poppins', size: 'm' };
 if (cvId) {
   const existing = getCV(cvId);
-  if (existing && existing.data) { data = existing.data; template = existing.template || template; }
+  if (existing && existing.data) { data = existing.data; template = existing.template || template; if (existing.theme) theme = { ...theme, ...existing.theme }; }
   else cvId = null;
+}
+
+function applyTheme() {
+  const sheet = document.getElementById('cvSheet');
+  sheet.style.setProperty('--cv-accent', theme.color);
+  sheet.style.setProperty('--cv-font', FONTS[theme.font] || FONTS.poppins);
+  sheet.style.setProperty('--cv-size', SIZES[theme.size] || SIZES.m);
+  document.querySelectorAll('#themeColors .theme-swatch').forEach((b) =>
+    b.classList.toggle('active', b.dataset.color.toLowerCase() === String(theme.color).toLowerCase()));
+  document.getElementById('themeFont').value = theme.font;
+  document.querySelectorAll('#themeSize [data-size]').forEach((b) => {
+    const on = b.dataset.size === theme.size;
+    b.classList.toggle('btn-primary', on);
+    b.classList.toggle('btn-outline-secondary', !on);
+  });
 }
 
 let saveTimer = null;
@@ -29,6 +48,7 @@ function persist() {
   const name = data.personal.fullName.trim();
   updateCV(id, {
     template,
+    theme,
     data,
     match: completeness(),
     target: data.personal.title.trim(),
@@ -195,11 +215,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (b.dataset.tpl === template) { b.classList.remove('btn-outline-primary'); b.classList.add('btn-primary'); }
     b.addEventListener('click', () => {
       template = b.dataset.tpl;
+      theme.color = TPL_DEFAULTS[template] || theme.color;
       document.querySelectorAll('#tplPills [data-tpl]').forEach((x) => { x.classList.add('btn-outline-primary'); x.classList.remove('btn-primary'); });
       b.classList.remove('btn-outline-primary'); b.classList.add('btn-primary');
-      renderPreview(); scheduleSave();
+      applyTheme(); renderPreview(); scheduleSave();
     });
   });
+
+  document.querySelectorAll('#themeColors .theme-swatch').forEach((b) =>
+    b.addEventListener('click', () => { theme.color = b.dataset.color; applyTheme(); scheduleSave(); }));
+  document.getElementById('themeFont').addEventListener('change', (e) => { theme.font = e.target.value; applyTheme(); scheduleSave(); });
+  document.querySelectorAll('#themeSize [data-size]').forEach((b) =>
+    b.addEventListener('click', () => { theme.size = b.dataset.size; applyTheme(); scheduleSave(); }));
+  applyTheme();
 
   renderRepeaters();
   renderPreview();
