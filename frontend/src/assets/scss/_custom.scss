@@ -174,10 +174,79 @@
   .skill-chip { display: inline-block; background: $gray-100; border: 1px solid $gray-200; border-radius: 20px; padding: 1px 10px; margin: 0 4px 4px 0; font-size: .9em; }
 }
 .tpl-government { --cv-accent: #00C951; }
+.tpl-government .cv-head { text-align: center; }
+.tpl-government .cv-sec { border-bottom: 3px double var(--cv-accent); }
 .tpl-banking { --cv-accent: #E66239; }
 .tpl-graduate .cv-name { color: var(--cv-accent); }
+.tpl-general .cv-sec { border-bottom: none; border-left: 4px solid var(--cv-accent); padding-left: 8px; }
+// Application letter layout
+.tpl-letter .lt-date { text-align: right; color: $gray-500; }
+.tpl-letter p { margin-bottom: 8px; }
 .theme-swatch { border: 2px solid transparent; }
 .theme-swatch.active { outline: 2px solid $primary; outline-offset: 2px; }
+
+// MrCV AI chat interface (Claude-style surface, no card)
+.chat-log { max-height: 70vh; overflow-y: auto; background: transparent; }
+.chat-avatar { width: 28px; height: 28px; border-radius: 50%; background: rgba($primary, .12); color: $primary; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+.bubble-bot { background: transparent; border: none; padding: 2px; max-width: 92%; font-size: .9rem; }
+.bubble-user { background: $primary; color: #fff; border-radius: 12px 12px 4px 12px; padding: 8px 14px; max-width: 85%; font-size: .9rem; }
+.chat-inputbar { position: sticky; bottom: 0; }
+.typing span { display: inline-block; width: 6px; height: 6px; margin-right: 3px; border-radius: 50%; background: $gray-400; animation: tblink 1s infinite; }
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes tblink { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+
+// AI demo layout: preview column sheet stays readable at any width
+
+// MrCV dark theme: adapt template chrome (Bootstrap handles the rest).
+// The CV paper preview intentionally stays light in both modes.
+[data-bs-theme="dark"] {
+  .sidebar { background: $gray-900; border-color: $gray-800; }
+  .sidebar .nav-link { color: $gray-200; }
+  .topbar { background: $gray-900 !important; }
+  .topbar .btn-light {
+    background: $gray-800 !important;
+    border-color: $gray-800 !important;
+    color: $gray-100 !important;
+  }
+  .topbar .btn-light:hover, .topbar .btn-light:focus, .topbar .btn-light:active {
+    background: $gray-700 !important;
+    border-color: $gray-700 !important;
+    color: #fff !important;
+  }
+  .logo-area { background: $gray-900 !important; border-color: $gray-800 !important; color: #fff; }
+  .card-header.bg-white { background: $gray-900 !important; }
+  .cv-mock { background: $gray-800; border-color: $gray-700; }
+  .cv-frame { background: transparent; border-color: $gray-700; }
+  .mock-line { background: $gray-600; }
+  .mock-side, .mock-photo { background: rgba($primary, .4); }
+  .cv-sheet { background: #fff; }
+  .chat-log { background: transparent; }
+  // Live preview paper follows the theme
+  [data-bs-theme="dark"] .cv-sheet {
+    background: $gray-900;
+    color: $gray-200;
+    border-color: $gray-700;
+  }
+  [data-bs-theme="dark"] .cv-sheet .cv-name { color: #fff; }
+  [data-bs-theme="dark"] .cv-sheet .cv-sec { color: #fff; }
+  [data-bs-theme="dark"] .cv-sheet .cv-contact,
+  [data-bs-theme="dark"] .cv-sheet .cv-dates { color: $gray-400; }
+  [data-bs-theme="dark"] .cv-sheet .skill-chip { background: $gray-800; border-color: $gray-700; }
+  [data-bs-theme="dark"] .tpl-banking .cv-head { background: #000; }
+}
+
+// MrCV gallery: scaled real-template preview + coming-soon cards
+.cv-frame {
+  height: 360px;
+  overflow: hidden;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+  background: #fff;
+}
+.cv-zoom { zoom: .55; border: none; box-shadow: none; border-radius: 0; }
+.cv-frame-sm { height: 300px; }
+.tpl-soon { opacity: .8; }
 .tpl-banking .cv-head { background: $gray-900; color: #fff; border-radius: 6px; padding: 12px 14px; margin: -8px -6px 10px; }
 .tpl-banking .cv-head .cv-name { color: #fff; }
 .tpl-banking .cv-head .cv-contact { color: $gray-300; }
@@ -185,8 +254,19 @@
 .tpl-graduate .cv-name { color: $primary; }
 
 @media print {
-  #sidebar, #topbar, #builderCol, footer, .no-print { display: none !important; }
+  #sidebar, #topbar, #aiCol, #builderCol, footer, .no-print { display: none !important; }
   .content { margin-left: 0 !important; padding: 0 !important; }
-  #cvCol { flex: 0 0 100% !important; max-width: 100% !important; width: 100% !important; }
+  #cvCol { display: block !important; flex: 0 0 100% !important; max-width: 100% !important; width: 100% !important; }
   .cv-sheet { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+  // Paper always prints light, even in dark mode
+  .cv-sheet, [data-bs-theme="dark"] .cv-sheet {
+    background: #fff !important;
+    color: $gray-800 !important;
+    border: none !important;
+  }
+  [data-bs-theme="dark"] .cv-sheet .cv-name,
+  [data-bs-theme="dark"] .cv-sheet .cv-sec { color: $gray-900 !important; }
+  [data-bs-theme="dark"] .cv-sheet .cv-contact,
+  [data-bs-theme="dark"] .cv-sheet .cv-dates { color: $gray-500 !important; }
+  [data-bs-theme="dark"] .cv-sheet .skill-chip { background: $gray-100 !important; border-color: $gray-200 !important; }
 }

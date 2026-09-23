@@ -15,9 +15,9 @@ export const TEMPLATES = [
   { slug: 'general', name: 'General Professional', cat: 'general', mock: 'clean',
     desc: 'Balanced 2-page CV for any role. Work history first, clean headings parsers love.',
     best: 'Any role, experienced hires', badges: ['ATS-safe', 'EN/SW', 'Free'] },
-  { slug: 'barua', name: 'Barua ya Maombi', cat: 'barua', mock: 'letter',
-    desc: 'Swahili application-letter layout. Pairs with any CV for a complete application pack.',
-    best: 'Barua za maombi kwa Kiswahili', badges: ['Kiswahili', 'Letter', 'Free'], useLink: 'cover-letters.html#generator' },
+  { slug: 'barua', name: 'Application Letter (Barua ya Maombi)', cat: 'barua', kind: 'letter', mock: 'letter',
+    desc: 'Swahili or English application-letter layout. Pairs with any CV for a complete application pack.',
+    best: 'Barua za maombi kwa Kiswahili au Kiingereza', badges: ['Kiswahili', 'Letter', 'Free'], useLink: 'cover-letters.html#generator' },
 ];
 
 function seedLetterEN(cvName, jobTitle, company) {
@@ -194,3 +194,129 @@ export function normalizeTZPhone(raw) {
   if (/^255\d{9}$/.test(d)) return `+${d}`;
   return raw;
 }
+
+// ---- device-local user profile ----
+const USER_KEY = 'mrcv.user';
+export function getUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+export function saveUser(u) { localStorage.setItem(USER_KEY, JSON.stringify(u || {})); }
+export function clearUser() { localStorage.removeItem(USER_KEY); }
+
+// ---- target country / region ----
+export const COUNTRIES = [
+  { code: 'TZ', name: 'Tanzania' }, { code: 'KE', name: 'Kenya' }, { code: 'UG', name: 'Uganda' },
+  { code: 'RW', name: 'Rwanda' }, { code: 'BI', name: 'Burundi' }, { code: 'CD', name: 'DR Congo' },
+  { code: 'NG', name: 'Nigeria' }, { code: 'GH', name: 'Ghana' }, { code: 'ZA', name: 'South Africa' },
+  { code: 'GB', name: 'United Kingdom' }, { code: 'US', name: 'United States' }, { code: 'CA', name: 'Canada' },
+  { code: 'DE', name: 'Germany' }, { code: 'AE', name: 'UAE' },
+];
+
+export const REGIONS = {
+  TZ: ['Arusha', 'Dar es Salaam', 'Dodoma', 'Geita', 'Iringa', 'Kagera', 'Katavi', 'Kigoma', 'Kilimanjaro', 'Lindi', 'Manyara', 'Mara', 'Mbeya', 'Morogoro', 'Mtwara', 'Mwanza', 'Njombe', 'Pemba North', 'Pemba South', 'Pwani', 'Rukwa', 'Ruvuma', 'Shinyanga', 'Simiyu', 'Singida', 'Songwe', 'Tabora', 'Tanga', 'Zanzibar North', 'Zanzibar South', 'Zanzibar West'],
+  KE: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Kiambu'],
+  UG: ['Kampala', 'Wakiso', 'Gulu', 'Mbarara', 'Jinja'],
+  RW: ['Kigali', 'Musanze', 'Huye', 'Rusizi'],
+  BI: ['Bujumbura', 'Gitega', 'Ngozi'],
+  CD: ['Kinshasa', 'Lubumbashi', 'Goma'],
+  NG: ['Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt'],
+  GH: ['Accra', 'Kumasi', 'Tamale'],
+  ZA: ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'],
+  GB: ['London', 'Manchester', 'Birmingham'],
+  US: ['New York', 'California', 'Texas'],
+  CA: ['Toronto', 'Vancouver', 'Ontario'],
+  DE: ['Berlin', 'Munich', 'Hamburg'],
+  AE: ['Dubai', 'Abu Dhabi', 'Sharjah'],
+};
+
+// ---- shared CV renderer (single real template: Graduate Starter) ----
+export function bulletsHTML(text) {
+  const lines = String(text || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) return '';
+  return `<ul class="cv-bullets">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+export function datesHTML(s, e) {
+  const t = [s, e].map((x) => String(x || '').trim()).filter(Boolean).join(' – ');
+  return t ? `<span class="cv-dates">${esc(t)}</span>` : '';
+}
+
+export function cvToHTML(data, only = null) {
+  const show = (key) => !only || only.includes(key);
+  const p = data.personal;
+  const contact = [p.phone, p.email, p.address].map((x) => String(x || '').trim()).filter(Boolean).join(' · ');
+  const skills = String(data.skills || '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+  return `
+    <div class="cv-head">
+      <div class="cv-name">${esc(p.fullName) || '<span class="text-secondary">Your Name</span>'}</div>
+      ${p.title ? `<div class="cv-title">${esc(p.title)}</div>` : ''}
+      ${contact ? `<div class="cv-contact">${esc(contact)}</div>` : ''}
+    </div>
+    ${show('summary') && p.summary ? `<div class="cv-sec">Summary</div><div>${esc(p.summary)}</div>` : ''}
+    ${show('experience') && data.experience.some((e) => e.role || e.employer) ? `<div class="cv-sec">Experience</div>${data.experience.filter((e) => e.role || e.employer).map((e) => `
+      <div class="cv-item"><div class="cv-item-head"><span>${esc(e.role)}${e.employer ? ` — ${esc(e.employer)}` : ''}</span>${datesHTML(e.start, e.end)}</div>${bulletsHTML(e.bullets)}</div>`).join('')}` : ''}
+    ${show('education') && data.education.some((e) => e.school || e.qualification) ? `<div class="cv-sec">Education</div>${data.education.filter((e) => e.school || e.qualification).map((e) => `
+      <div class="cv-item"><div class="cv-item-head"><span>${esc(e.qualification)}${e.school ? ` — ${esc(e.school)}` : ''}</span>${datesHTML(e.start, e.end)}</div></div>`).join('')}` : ''}
+    ${show('skills') && skills.length ? `<div class="cv-sec">Skills</div><div>${skills.map((s) => `<span class="skill-chip">${esc(s)}</span>`).join('')}</div>` : ''}
+    ${show('projects') && data.projects.some((x) => x.name || x.desc) ? `<div class="cv-sec">Projects</div>${data.projects.filter((x) => x.name || x.desc).map((x) => `
+      <div class="cv-item"><div class="cv-item-head"><span>${esc(x.name)}</span></div><div>${esc(x.desc)}</div></div>`).join('')}` : ''}
+    ${show('referees') && data.referees.some((r) => r.name) ? `<div class="cv-sec">Referees</div>${data.referees.filter((r) => r.name).map((r) => `
+      <div class="cv-item"><strong>${esc(r.name)}</strong>${r.title ? ` — ${esc(r.title)}` : ''}${r.phone ? `<br><span class="cv-dates">${esc(r.phone)}</span>` : ''}</div>`).join('')}` : ''}`;
+}
+
+export const SAMPLE_CV = {
+  personal: {
+    fullName: 'Amina Juma',
+    title: 'BSc Computer Science Graduate',
+    phone: '+255765123456',
+    email: 'amina.juma@example.com',
+    address: 'Ubungo, Dar es Salaam',
+    summary: 'Motivated Computer Science graduate from the University of Dar es Salaam with hands-on IT support experience and a final-year project in mobile payments. Quick to learn, hardworking and ready to contribute from day one.',
+  },
+  education: [
+    { school: 'University of Dar es Salaam', qualification: 'BSc in Computer Science', start: '2020', end: '2023' },
+    { school: 'Kilakala Secondary School', qualification: 'ACSEE — Division I', start: '2018', end: '2020' },
+  ],
+  experience: [
+    {
+      employer: 'Vodacom Tanzania — IT Department',
+      role: 'IT Support Intern (Field Attachment)',
+      start: 'Jun 2022',
+      end: 'Aug 2022',
+      bullets: 'Resolved 30+ staff support tickets on hardware, email and network issues\nDocumented common fixes, cutting repeat tickets by 20%\nAssisted rollout of 50 new workstations across two floors',
+    },
+  ],
+  skills: 'Computer troubleshooting\nMS Office & Google Workspace\nBasic networking\nKiswahili & English\nTeamwork',
+  projects: [
+    { name: 'M-Pesa Fee Calculator App', desc: 'Android class project that computes mobile-money charges offline. Presented to 60 students and lecturers.' },
+  ],
+  referees: [
+    { name: 'Dr. Neema Shirima', title: 'Lecturer, UDSM', phone: '+255754987654' },
+    { name: 'Mr. Baraka Mziray', title: 'Supervisor, Vodacom Tanzania', phone: '+255713456789' },
+  ],
+};
+
+// ---- application letter renderer (Barua) ----
+export function letterToHTML(l) {
+  return `
+    <div class="cv-item lt-date">${esc(l.date)}</div>
+    <div class="cv-item"><strong>${esc(l.recipient)}</strong><br>${String(l.address || '').split('\n').map((a) => esc(a)).join('<br>')}</div>
+    <div class="cv-item"><strong>${esc(l.ref)}</strong></div>
+    ${(l.body || []).map((p) => `<p>${esc(p)}</p>`).join('')}
+    <div class="cv-item">${esc(l.close)},<br><strong>${esc(l.name)}</strong><br><span class="cv-dates">${esc(l.attachments)}</span></div>`;
+}
+
+export const SAMPLE_LETTER = {
+  date: '12/01/2026',
+  recipient: 'Meneja wa Ajira',
+  address: 'CRDB Bank\nDar es Salaam, Tanzania',
+  ref: 'YAH: MAOMBI YA KAZI YA TELLER',
+  body: [
+    'Mimi, Amina Juma, ninaomba kazi ya Teller kama ilivyotangazwa. Wasifu wangu (CV) nilioambatanisha unaeleza elimu, ujuzi na uzoefu wangu unaohusiana na kazi hii.',
+    'Nina bidii, nina uwezo wa kujifunza haraka na niko tayari kuchangia CRDB Bank. Nitafurahi kupata fursa ya kujadili maombi yangu kwenye usaili.',
+  ],
+  close: 'Wako mtiifu',
+  name: 'Amina Juma',
+  attachments: 'Viambatanisho: CV',
+};

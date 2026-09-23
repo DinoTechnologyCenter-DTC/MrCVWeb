@@ -1,5 +1,6 @@
 // Cover letters — list, generator (EN/SW), download, WhatsApp share.
 import { getCVs, getLetters, upsertLetter, deleteLetter, buildLetter, esc, fmtDate, waLink, downloadDoc } from './mrcv-store.js';
+import { t } from './mrcv-i18n.js';
 
 let editingId = null;
 
@@ -12,8 +13,8 @@ function renderLetters() {
   if (!letters.length) {
     box.innerHTML = `<div class="text-center py-5">
       <i class="ti ti-mail fs-1 text-secondary"></i>
-      <h3 class="h6 mt-3">No letters yet</h3>
-      <p class="text-secondary small">Generate one below from any saved CV — English or Kiswahili.</p>
+      <h3 class="h6 mt-3">${t('ltr.noletters')}</h3>
+      <p class="text-secondary small">${t('ltr.nolettersSub')}</p>
     </div>`;
     return;
   }
@@ -24,7 +25,7 @@ function renderLetters() {
         <div class="flex-grow-1">
           <strong>${esc(l.jobTitle)} — ${esc(l.company)}</strong>
           <span class="badge bg-light text-secondary border ms-1">${esc(l.lang)}</span><br>
-          <small class="text-secondary">From: ${esc(cvs[l.cvId] || 'CV')} · Updated ${fmtDate(l.updatedAt)}</small>
+          <small class="text-secondary">${t('ltr.from')} ${esc(cvs[l.cvId] || 'CV')} · Updated ${fmtDate(l.updatedAt)}</small>
         </div>
         <div class="d-flex gap-1 flex-shrink-0">
           <button class="btn btn-sm btn-outline-primary" data-act="edit" data-id="${l.id}" title="Edit"><i class="ti ti-edit"></i></button>
@@ -60,11 +61,56 @@ function refreshPreview() {
   document.getElementById('letterBody').value = buildLetter(f);
 }
 
+// ---- offline AI tailor: job advert keywords + background -> tailored letter ----
+const AD_STOP = new Set('the,a,an,and,or,for,with,you,your,our,are,will,have,has,who,can,all,from,that,this,shall,should,would,position,role,work,team,company,job,required,requirements,experience,skills,ability,strong,plus,must,join,looking,seeking,ideal,apply,bank,tz,ajira,kazi,katika,kwa,na,ya,za,wa,hii,hiyo,kama,ili,ni,sana,tena,yetu,yako,yao,mimi,sisi,wewe,also,into,over,under,more,most,very,just,than,about,them,they,their,been,were,was,had,not,but'.split(','));
+
+export function topKeywords(text, n = 3) {
+  const freq = {};
+  (String(text).toLowerCase().match(/[a-z]{5,}/g) || []).forEach((w) => { if (!AD_STOP.has(w)) freq[w] = (freq[w] || 0) + 1; });
+  return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, n).map(([w]) => w.replace(/^\w/, (c) => c.toUpperCase()));
+}
+
+export function tailoredLetter(f, kws, bg) {
+  const jt = f.jobTitle || 'the advertised position';
+  const co = f.company || 'your organisation';
+  const mgr = f.manager;
+  const bgSnip = String(bg).split(/[.\n]+/).map((s) => s.trim()).filter(Boolean)[0] || (f.lang === 'SW' ? 'uzoefu wangu' : 'my experience');
+  const kwTxt = kws.length ? kws.join(', ') : (f.lang === 'SW' ? 'sifa muhimu' : 'key requirements');
+  if (f.lang === 'SW') {
+    return `${fmtDate(new Date())}\n${mgr || 'Meneja wa Ajira'}\n${co}\nDar es Salaam, Tanzania\n\nNdugu Meneja,\n\nYAH: MAOMBI YA KAZI YA ${jt.toUpperCase()}\n\nMimi, ${f.cvName}, ninaomba kazi ya ${jt} kama ilivyotangazwa.\n\nKutokana na historia yangu — ${bgSnip} — ninafaa mahitaji yako muhimu (${kwTxt}). Wasifu wangu (CV) nilioambatanisha unaeleza elimu, ujuzi na uzoefu wangu zaidi.\n\nNitafurahi kupata fursa ya kujadili maombi yangu kwenye usaili.\n\nWako mtiifu,\n${f.cvName}\nViambatanisho: CV`;
+  }
+  return `${fmtDate(new Date())}\n${mgr || 'The Hiring Manager'}\n${co}\nDar es Salaam, Tanzania\n\nDear ${mgr ? mgr : 'Sir/Madam'},\n\nRE: APPLICATION FOR THE POSITION OF ${jt.toUpperCase()}\n\nI, ${f.cvName}, wish to apply for the above position as advertised.\n\nDrawing from my background — ${bgSnip} — I am a strong match for your key requirements (${kwTxt}). My CV, attached herewith, outlines my education, skills and experience in more detail.\n\nI would welcome the opportunity to discuss my application at an interview.\n\nYours faithfully,\n${f.cvName}\nAttachments: CV`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (!document.getElementById('letterList')) return;
   fillCvSelect();
   renderLetters();
   refreshPreview();
+
+  let letterMode = null;
+  try { letterMode = localStorage.getItem('mrcv.letterMode') || null; } catch (e) { /* ignore */ }
+  const showLetterMode = (m) => {
+    letterMode = m;
+    try { localStorage.setItem('mrcv.letterMode', m || ''); } catch (e) { /* ignore */ }
+    document.getElementById('modeChooser').classList.toggle('d-none', !!m);
+    document.getElementById('aiPanel').classList.toggle('d-none', m !== 'ai');
+    document.getElementById('modeChip').classList.toggle('d-none', !m);
+    if (m) document.getElementById('modeName').textContent = m === 'ai' ? t('mode.ai') : t('mode.manual');
+  };
+  showLetterMode(letterMode);
+  document.querySelectorAll('#modeChooser [data-mode]').forEach((b) =>
+    b.addEventListener('click', () => showLetterMode(b.dataset.mode)));
+  document.getElementById('modeChange').addEventListener('click', () => showLetterMode(null));
+  document.getElementById('aiGenLetter').addEventListener('click', () => {
+    const f = currentForm();
+    if (!f.jobTitle || !f.company) { window.alert(t('ltr.needBoth')); return; }
+    const kws = topKeywords(document.getElementById('aiAd').value);
+    const bg = document.getElementById('aiBg').value;
+    document.getElementById('letterBody').value = tailoredLetter(f, kws, bg);
+    document.getElementById('aiKeys').textContent = kws.length ? `${t('ai2.matched')} ${kws.join(', ')}` : '';
+    document.getElementById('generator').scrollIntoView({ behavior: 'smooth' });
+  });
 
   ['letterCv', 'letterJob', 'letterCompany', 'letterManager'].forEach((id) =>
     document.getElementById(id).addEventListener('input', refreshPreview));
@@ -81,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('letterSave').addEventListener('click', () => {
     const f = currentForm();
-    if (!f.jobTitle || !f.company) { window.alert('Add a job title and company first.'); return; }
+    if (!f.jobTitle || !f.company) { window.alert(t('ltr.needBoth')); return; }
     upsertLetter({ id: editingId, cvId: f.cvId, jobTitle: f.jobTitle, company: f.company, lang: f.lang, body: document.getElementById('letterBody').value });
     editingId = null;
     renderLetters();
@@ -104,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const l = letters.find((x) => x.id === btn.dataset.id);
     if (!l) return;
     if (btn.dataset.act === 'del') {
-      if (!window.confirm('Delete this letter?')) return;
+      if (!window.confirm(t('ltr.delConfirm'))) return;
       deleteLetter(l.id);
       renderLetters();
     }

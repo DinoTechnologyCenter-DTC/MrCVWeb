@@ -1,0 +1,191 @@
+// MrCV i18n — English / Kiswahili. Static strings via [data-i18n],
+// sidebar via href map (no HTML edits needed there). Auto-applies on every
+// page through main.js. Dynamic content uses t() at render time.
+import { getUser } from './mrcv-store.js';
+
+const EN = {
+  'nav.mycvs': 'My CVs', 'nav.templates': 'Templates', 'nav.newcv': 'New CV',
+  'nav.letters': 'Cover Letters', 'nav.myaccount': 'My Account', 'nav.login': 'Log in',
+  'nav.signup': 'Sign up', 'nav.logout': 'Log out', 'nav.account': 'Account',
+  'acc.title': 'My Account', 'acc.sub': 'Your profile, saved on this device. No cloud needed.',
+  'acc.profile': 'Profile', 'acc.name': 'Full name', 'acc.phone': 'Phone', 'acc.email': 'Email',
+  'acc.lang': 'Language / Lugha', 'acc.country': 'Country', 'acc.region': 'Region / City',
+  'acc.target': 'Target', 'acc.save': 'Save profile', 'acc.saved': 'Saved',
+  'acc.logout': 'Log out', 'acc.wipe': 'Erase all my data', 'acc.danger': 'Danger zone',
+  'acc.notsigned': 'Not signed in', 'acc.cvs': 'CVs', 'acc.letters': 'Letters',
+  'acc.downloads': 'Downloads', 'acc.wipeConfirm': 'Erase ALL CVs, letters and profile from this device? Cannot be undone.',
+  'acc.photo': 'Profile photo', 'acc.choose': 'Choose photo', 'acc.remove': 'Remove',
+  'idx.title': 'My CVs', 'idx.sub': 'Karibu — create, tailor and share job-winning CVs.',
+  'idx.templates': 'Templates', 'idx.newcv': 'New CV', 'idx.sCvs': 'My CVs',
+  'idx.sLetters': 'Cover Letters', 'idx.sMatch': 'Avg. Match', 'idx.sDl': 'PDF Downloads',
+  'idx.mycvs': 'My CVs', 'idx.quick': 'Quick actions', 'idx.startNew': 'Start a new CV',
+  'idx.browse': 'Browse templates', 'idx.writeLetter': 'Write cover letter',
+  'idx.getting': 'Getting started', 'idx.s1': 'Create your first CV',
+  'idx.s2': 'Generate a cover letter', 'idx.s3': 'Download / share your PDF',
+  'idx.emptyT': 'No CVs yet', 'idx.emptyS': 'Create your first CV in under 10 minutes — free, no watermark.',
+  'idx.createFirst': 'Create my CV', 'idx.delConfirm': 'Delete this CV? This cannot be undone.',
+  'tpl.title': 'Templates', 'tpl.sub': 'ATS-friendly designs made for Tanzanian employers. All free.',
+  'tpl.newcv': 'New CV', 'tpl.all': 'All', 'tpl.graduate': 'Graduate', 'tpl.government': 'Government / NGO',
+  'tpl.banking': 'Banking / Telecom', 'tpl.general': 'General', 'tpl.letter': 'Application Letter',
+  'tpl.use': 'Use this template', 'tpl.preview': 'Preview', 'tpl.close': 'Close', 'tpl.bestfor': 'Best for:',
+  'ltr.title': 'Cover Letters', 'ltr.sub': 'Application letters generated from your CV — English or Kiswahili.',
+  'ltr.letters': 'Letters', 'ltr.cvsready': 'CVs ready', 'ltr.new': 'New letter', 'ltr.saved': 'Saved letters',
+  'ltr.generate': 'Generate letter', 'ltr.usecv': 'Use CV', 'ltr.job': 'Job title', 'ltr.company': 'Company',
+  'ltr.manager': 'Hiring manager (optional)', 'ltr.lang': 'Language / Lugha', 'ltr.body': 'Letter preview (editable)',
+  'ltr.save': 'Save letter', 'ltr.dl': 'Download .doc', 'ltr.tip': 'Tip: add your phone & email in the CV builder and they will auto-fill here.',
+  'ltr.noletters': 'No letters yet', 'ltr.nolettersSub': 'Generate one below from any saved CV — English or Kiswahili.',
+  'ltr.needBoth': 'Add a job title and company first.', 'ltr.delConfirm': 'Delete this letter?',
+  'ltr.blank': 'Leave blank for Sir/Madam', 'ltr.from': 'From:',
+  'bld.personal': 'Personal info', 'bld.education': 'Education', 'bld.experience': 'Experience',
+  'bld.skills': 'Skills', 'bld.projects': 'Projects', 'bld.referees': 'Referees',
+  'bld.refNote': '(TZ employers expect 2)', 'bld.export': 'Export', 'bld.add': 'Add', 'bld.remove': 'Remove',
+  'bld.phoneHint': 'Auto-formats to +255…', 'bld.pdf': 'Download PDF', 'bld.wa': 'WhatsApp',
+  'bld.pdfNote': 'PDF uses your browser print dialog — choose “Save as PDF”. Free, no watermark.',
+  'bld.template': 'Template:', 'bld.color': 'Color:', 'bld.font': 'Font:', 'bld.size': 'Size:',
+  'bld.mycvs': 'My CVs', 'bld.preview': 'Preview', 'bld.fill': 'Fill from profile', 'bld.savedAt': '· Saved ',
+  'bld.title': 'New CV', 'bld.intro': 'Fill in your details — preview updates live.',
+  'fld.name': 'Full name *', 'fld.title': 'Professional title', 'fld.phone': 'Phone *',
+  'fld.email': 'Email', 'fld.address': 'Address', 'fld.summary': 'Professional summary',
+  'mode.choose': 'How do you want to start?', 'mode.manual': 'Customize Yourself',
+  'mode.manualSub': 'Fill the guided form step by step — full control.',
+  'mode.ai': 'AI Generation', 'mode.aiSub': 'Answer 4 quick questions — we draft it for you.',
+  'mode.change': 'Change',
+  'ai.offline': 'Works offline — smart draft, review before download.',
+  'ai.name': 'Your full name', 'ai.job': 'Target job title', 'ai.level': 'Experience level',
+  'ai.lStudent': 'Student', 'ai.lFresher': 'Fresh graduate', 'ai.lExperienced': 'Experienced',
+  'ai.about': 'Tell us about yourself (rough is fine)',
+  'ai.aboutPh': 'e.g. Finished Form Six in 2022, worked at a shop in Kariakoo, phone 0765 123 456, good with customers',
+  'ai.generate': 'Generate my CV', 'ai.draft': 'Smart draft ready — review and edit below.',
+  'ai.needName': 'Please add your name first.',
+  'chat.hi': "Hi! I'm MrCV AI. I'll draft your CV from 4 quick answers — rough is fine.",
+  'chat.qName': 'First: what is your full name?',
+  'chat.qJob': 'Great, {name}! What job are you targeting?',
+  'chat.qLevel': 'Got it. What is your experience level?',
+  'chat.qAbout': 'Last one — tell me about yourself: school, work, phone, skills. Rough is fine.',
+  'chat.done': 'Smart draft ready! Review and edit it in the form below.',
+  'chat.view': 'View draft', 'chat.restart': 'Start over', 'chat.sendPh': 'Type here…',
+  'preview.live': 'Live preview', 'preview.expand': 'Expand', 'preview.collapse': 'Collapse',
+  'notif.viewAll': 'View all', 'notif.caughtUp': 'All caught up. Good luck with the applications!',
+  'notif.profileT': 'Complete your profile', 'notif.profileS': 'Add your name so CVs and letters fill themselves.',
+  'notif.firstT': 'Create your first CV', 'notif.firstS': 'Free, no watermark — ready in under 10 minutes.',
+  'notif.dlT': 'Download your CV', 'notif.dlS': 'Your CV is ready. Save the PDF or share via WhatsApp.',
+  'notif.letterT': 'Add a cover letter', 'notif.letterS': 'Pair your CV with an application letter.',
+  'chat.generating': 'Generating your CV…', 'chat.edit': 'Edit details',
+  'chat.sSummary': 'Writing your summary…', 'chat.sExp': 'Adding your experience…',
+  'chat.sEdu': 'Adding your education…', 'chat.sSkills': 'Listing your skills…',
+  'chat.sProj': 'Adding your projects…', 'chat.sRef': 'Adding your referees…',
+  'ai.promoT': 'Want it faster?', 'ai.promoS': 'Let AI draft your CV from 4 quick answers.',
+  'ai.promoBtn': 'Try AI Generation',
+  'ai2.ad': 'Paste the job advert', 'ai2.bg': 'Your background (rough is fine)',
+  'ai2.generate': 'Generate tailored letter', 'ai2.matched': 'Matched requirements:',
+};
+
+const SW = {
+  'nav.mycvs': 'CV Zangu', 'nav.templates': 'Violezo', 'nav.newcv': 'CV Mpya',
+  'nav.letters': 'Barua za Maombi', 'nav.myaccount': 'Akaunti Yangu', 'nav.login': 'Ingia',
+  'nav.signup': 'Jisajili', 'nav.logout': 'Toka', 'nav.account': 'Akaunti',
+  'acc.title': 'Akaunti Yangu', 'acc.sub': 'Wasifu wako, umehifadhiwa kwenye kifaa chako. Hakuna wingu linalohitajika.',
+  'acc.profile': 'Wasifu', 'acc.name': 'Jina kamili', 'acc.phone': 'Simu', 'acc.email': 'Barua pepe',
+  'acc.lang': 'Lugha', 'acc.country': 'Nchi', 'acc.region': 'Mkoa / Jiji',
+  'acc.target': 'Lengo', 'acc.save': 'Hifadhi wasifu', 'acc.saved': 'Imehifadhiwa',
+  'acc.logout': 'Toka', 'acc.wipe': 'Futa data zangu zote', 'acc.danger': 'Eneo hatari',
+  'acc.notsigned': 'Hujaingia', 'acc.cvs': 'CV', 'acc.letters': 'Barua',
+  'acc.downloads': 'Upakuaji', 'acc.wipeConfirm': 'Futa CV, barua na wasifu wote kwenye kifaa hiki? Haiwezi kutenduliwa.',
+  'acc.photo': 'Picha ya wasifu', 'acc.choose': 'Chagua picha', 'acc.remove': 'Ondoa',
+  'idx.title': 'CV Zangu', 'idx.sub': 'Karibu — tengeneza, boresha na shiriki CV zinazoshinda kazi.',
+  'idx.templates': 'Violezo', 'idx.newcv': 'CV Mpya', 'idx.sCvs': 'CV Zangu',
+  'idx.sLetters': 'Barua', 'idx.sMatch': 'Wastani wa Ulinganifu', 'idx.sDl': 'Upakuaji wa PDF',
+  'idx.mycvs': 'CV Zangu', 'idx.quick': 'Vitendo vya haraka', 'idx.startNew': 'Anza CV mpya',
+  'idx.browse': 'Tazama violezo', 'idx.writeLetter': 'Andika barua',
+  'idx.getting': 'Kuanza', 'idx.s1': 'Tengeneza CV yako ya kwanza',
+  'idx.s2': 'Tengeneza barua', 'idx.s3': 'Pakua / shiriki PDF',
+  'idx.emptyT': 'Hakuna CV bado', 'idx.emptyS': 'Tengeneza CV yako ya kwanza chini ya dakika 10 — bure, bila alama.',
+  'idx.createFirst': 'Tengeneza CV yangu', 'idx.delConfirm': 'Futa CV hii? Haiwezi kutenduliwa.',
+  'tpl.title': 'Violezo', 'tpl.sub': 'Miundo rafiki kwa ATS iliyotengenezwa kwa waajiri wa Tanzania. Zote bure.',
+  'tpl.newcv': 'CV Mpya', 'tpl.all': 'Zote', 'tpl.graduate': 'Mhitimu', 'tpl.government': 'Serikali / NGO',
+  'tpl.banking': 'Benki / Mawasiliano', 'tpl.general': 'Kawaida', 'tpl.letter': 'Barua ya Maombi',
+  'tpl.use': 'Tumia kiolezo hiki', 'tpl.preview': 'Hakiki', 'tpl.close': 'Funga', 'tpl.bestfor': 'Bora kwa:',
+  'ltr.title': 'Barua', 'ltr.sub': 'Barua za maombi kutoka CV yako — Kiingereza au Kiswahili.',
+  'ltr.letters': 'Barua', 'ltr.cvsready': 'CV tayari', 'ltr.new': 'Barua mpya', 'ltr.saved': 'Barua zilizohifadhiwa',
+  'ltr.generate': 'Tengeneza barua', 'ltr.usecv': 'Tumia CV', 'ltr.job': 'Kazi', 'ltr.company': 'Kampuni',
+  'ltr.manager': 'Meneja wa ajira (hiari)', 'ltr.lang': 'Lugha', 'ltr.body': 'Hakiki ya barua (inaharirika)',
+  'ltr.save': 'Hifadhi barua', 'ltr.dl': 'Pakua .doc', 'ltr.tip': 'Kidokezo: weka simu na barua pepe kwenye kiolezo cha CV — zitajijaza zenyewe hapa.',
+  'ltr.noletters': 'Hakuna barua bado', 'ltr.nolettersSub': 'Tengeneza moja hapa chini kutoka CV yoyote — Kiingereza au Kiswahili.',
+  'ltr.needBoth': 'Weka cheo cha kazi na kampuni kwanza.', 'ltr.delConfirm': 'Futa barua hii?',
+  'ltr.blank': 'Acha wazi kwa Bwana/Bibi', 'ltr.from': 'Kutoka:',
+  'bld.personal': 'Taarifa binafsi', 'bld.education': 'Elimu', 'bld.experience': 'Uzoefu',
+  'bld.skills': 'Ujuzi', 'bld.projects': 'Miradi', 'bld.referees': 'Wadhamini',
+  'bld.refNote': '(Waajiri wa Tanzania wanatarajia 2)', 'bld.export': 'Pakua', 'bld.add': 'Ongeza', 'bld.remove': 'Ondoa',
+  'bld.phoneHint': 'Inabadilika kiotomatiki kwenda +255…', 'bld.pdf': 'Pakua PDF', 'bld.wa': 'WhatsApp',
+  'bld.pdfNote': 'PDF inatumia kidirisha cha kuchapisha cha kivinjari chako — chagua “Hifadhi kama PDF”. Bure, bila alama.',
+  'bld.template': 'Kiolezo:', 'bld.color': 'Rangi:', 'bld.font': 'Fonti:', 'bld.size': 'Ukubwa:',
+  'bld.mycvs': 'CV Zangu', 'bld.preview': 'Hakiki', 'bld.fill': 'Jaza kutoka wasifu', 'bld.savedAt': '· Imehifadhiwa ',
+  'bld.title': 'CV Mpya', 'bld.intro': 'Jaza taarifa zako — hakiki inasasishwa moja kwa moja.',
+  'fld.name': 'Jina kamili *', 'fld.title': 'Cheo cha kitaaluma', 'fld.phone': 'Simu *',
+  'fld.email': 'Barua pepe', 'fld.address': 'Anwani', 'fld.summary': 'Muhtasari wa kitaaluma',
+  'mode.choose': 'Utaanzaje?', 'mode.manual': 'Jitengenezee Mwenyewe',
+  'mode.manualSub': 'Jaza fomu hatua kwa hatua — udhibiti kamili.',
+  'mode.ai': 'Uzalishaji wa AI', 'mode.aiSub': 'Jibu maswali 4 mafupi — tunakuandalia rasimu.',
+  'mode.change': 'Badilisha',
+  'ai.offline': 'Inafanya kazi bila intaneti — rasimu janja, pitia kabla ya kupakua.',
+  'ai.name': 'Jina lako kamili', 'ai.job': 'Kazi unayotaka', 'ai.level': 'Kiwango cha uzoefu',
+  'ai.lStudent': 'Mwanafunzi', 'ai.lFresher': 'Mhitimu mpya', 'ai.lExperienced': 'Mwenye uzoefu',
+  'ai.about': 'Tuelewze kuhusu wewe (hata kwa ufupi)',
+  'ai.aboutPh': 'mf. Nilimaliza Kidato cha Sita 2022, nilifanya kazi dukani Kariakoo, simu 0765 123 456, mzuri na wateja',
+  'ai.generate': 'Nitengenezee CV', 'ai.draft': 'Rasimu janja tayari — pitia na uhariri hapa chini.',
+  'ai.needName': 'Tafadhali weka jina lako kwanza.',
+  'chat.hi': 'Habari! Mimi ni MrCV AI. Nitakuandalia CV kutoka maswali 4 mafupi — hata kwa ufupi.',
+  'chat.qName': 'Kwanza: jina lako kamili ni nani?',
+  'chat.qJob': 'Vizuri, {name}! Unalenga kazi gani?',
+  'chat.qLevel': 'Sawa. Kiwango chako cha uzoefu ni kipi?',
+  'chat.qAbout': 'La mwisho — niambie kuhusu wewe: shule, kazi, simu, ujuzi. Hata kwa ufupi.',
+  'chat.done': 'Rasimu janja tayari! Pitia na uhariri kwenye fomu hapa chini.',
+  'chat.view': 'Tazama rasimu', 'chat.restart': 'Anza upya', 'chat.sendPh': 'Andika hapa…',
+  'preview.live': 'Hakiki moja kwa moja', 'preview.expand': 'Panua', 'preview.collapse': 'Kunja',
+  'notif.viewAll': 'Tazama zote', 'notif.caughtUp': 'Umemaliza yote. Kila la kheri na maombi!',
+  'notif.profileT': 'Kamilisha wasifu wako', 'notif.profileS': 'Weka jina lako CV na barua zijijaze zenyewe.',
+  'notif.firstT': 'Tengeneza CV yako ya kwanza', 'notif.firstS': 'Bure, bila alama — tayari chini ya dakika 10.',
+  'notif.dlT': 'Pakua CV yako', 'notif.dlS': 'CV yako iko tayari. Hifadhi PDF au shiriki WhatsApp.',
+  'notif.letterT': 'Ongeza barua', 'notif.letterS': 'Ambatisha CV na barua ya maombi.',
+  'chat.generating': 'Ninatengeneza CV yako…', 'chat.edit': 'Hariri maelezo',
+  'chat.sSummary': 'Ninaandika muhtasari…', 'chat.sExp': 'Ninaongeza uzoefu…',
+  'chat.sEdu': 'Ninaongeza elimu…', 'chat.sSkills': 'Ninaorodhesha ujuzi…',
+  'chat.sProj': 'Ninaongeza miradi…', 'chat.sRef': 'Ninaongeza wadhamini…',
+  'ai.promoT': 'Unataka haraka?', 'ai.promoS': 'AI ikuandalie CV kutoka maswali 4 mafupi.',
+  'ai.promoBtn': 'Jaribu AI',
+  'ai2.ad': 'Bandika tangazo la kazi', 'ai2.bg': 'Historia yako (hata kwa ufupi)',
+  'ai2.generate': 'Tengeneza barua iliyoboreshwa', 'ai2.matched': 'Mahitaji yaliyolingana:',
+};
+
+const STR = { en: EN, sw: SW };
+
+export function lang() {
+  try { return (getUser().lang || 'EN').toUpperCase() === 'SW' ? 'sw' : 'en'; }
+  catch (e) { return 'en'; }
+}
+
+export function t(key) {
+  const L = lang();
+  return (STR[L] && STR[L][key]) || STR.en[key] || key;
+}
+
+const NAV_BY_HREF = {
+  'index.html': 'nav.mycvs', 'templates.html': 'nav.templates', 'new-cv.html': 'nav.newcv',
+  'cover-letters.html': 'nav.letters', 'account.html': 'nav.myaccount',
+  'signin.html': 'nav.login', 'signup.html': 'nav.signup',
+};
+
+export function applyI18n(root = document) {
+  root.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  root.querySelectorAll('[data-i18n-ph]').forEach((el) => el.setAttribute('placeholder', t(el.dataset.i18nPh)));
+  document.querySelectorAll('#sidebar .nav-link').forEach((a) => {
+    const s = a.querySelector('.nav-text');
+    if (!s) return;
+    const key = a.hasAttribute('data-logout') ? 'nav.logout' : NAV_BY_HREF[a.getAttribute('href')];
+    if (key) s.textContent = t(key);
+  });
+  const sections = document.querySelectorAll('#sidebar li.px-4 small.nav-text');
+  if (sections.length > 1) sections[sections.length - 1].textContent = t('nav.account');
+}
+
+document.addEventListener('DOMContentLoaded', () => applyI18n());
