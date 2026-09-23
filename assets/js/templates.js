@@ -1,4 +1,4 @@
-import{A as r,B as n,x as i,S as o,h as d,t as c,D as v}from"./main.js";function p(e){return e.kind==="letter"?`<div class="cv-sheet tpl-letter cv-zoom">${n(v)}</div>`:`<div class="cv-sheet tpl-${e.slug} cv-zoom">${i(o)}</div>`}function f(e){const a=e.useLink||`new-cv.html?template=${e.slug}`;return`
+import{E as r,F as n,y as i,S as o,e as d,t as c,G as v}from"./main.js";function p(e){return e.kind==="letter"?`<div class="cv-sheet tpl-letter cv-zoom">${n(v)}</div>`:`<div class="cv-sheet tpl-${e.slug} cv-zoom">${i(o)}</div>`}function f(e){const a=e.useLink||`new-cv.html?template=${e.slug}`;return`
   <div class="col-12 col-md-6 col-lg-4 tpl-card" data-cat="${e.cat}">
     <div class="card h-100">
       <div class="card-body p-3 d-flex flex-column">
